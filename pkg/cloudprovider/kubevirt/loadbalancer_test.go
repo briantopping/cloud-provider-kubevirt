@@ -51,7 +51,7 @@ var (
 		ObjectMeta: metav1.ObjectMeta{
 			Name:        "a354699682ec311e9b210d663bd873d9",
 			Namespace:   "test",
-			Annotations: map[string]string{"foo": "baz"},
+			Annotations: map[string]string{"metallb.universe.tf/allow-shared-ip": "bar-proxy"},
 		},
 		Spec: corev1.ServiceSpec{
 			Ports: []corev1.ServicePort{
@@ -323,9 +323,9 @@ func TestEnsureLoadBalancer(t *testing.T) {
 			CreationPollInterval: 1,
 			Mutators: []Mutator{{
 				Kind:       ServiceAnnotation,
-				SearchKey:  "foo",
-				SearchVal:  "bar",
-				ReplaceVal: "baz",
+				SearchKey:  "metallb.universe.tf/allow-shared-ip",
+				SearchVal:  "(.*)",
+				ReplaceVal: "$1-proxy",
 			}},
 		},
 	}
@@ -482,7 +482,7 @@ func TestEnsureLoadBalancer(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "service2",
 					UID:         types.UID("35469968-2ec3-11e9-b210-d663bd873d93"),
-					Annotations: map[string]string{"foo": "bar"},
+					Annotations: map[string]string{"metallb.universe.tf/allow-shared-ip": "bar"},
 				},
 				Spec: corev1.ServiceSpec{
 					Type: corev1.ServiceTypeLoadBalancer,
@@ -497,7 +497,7 @@ func TestEnsureLoadBalancer(t *testing.T) {
 			},
 			"cluster1",
 			"192.168.0.38",
-			map[string]string{"foo": "baz"},
+			map[string]string{"metallb.universe.tf/allow-shared-ip": "bar-proxy"},
 			corev1.ServiceExternalTrafficPolicyTypeLocal,
 			nil,
 		},

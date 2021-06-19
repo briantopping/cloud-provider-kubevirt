@@ -326,14 +326,18 @@ func (lb *loadbalancer) getLoadBalancerCreatePollInterval() time.Duration {
 }
 
 func (lb *loadbalancer) mutateService(svc *corev1.Service) error {
+	v := klog.V(3)
+	v.Infof("Applying %v mutators to Service/%s in namespace %s", len(lb.config.Mutators), svc.Name, svc.Namespace)
 	for _, m := range lb.config.Mutators {
 		switch m.Kind {
 		case ServiceAnnotation:
+			v.Infof("  Checking ServiceAnnotation in %v", m)
 			err := processMap(&m, &(*svc).Annotations)
 			if err != nil {
 				return err
 			}
 		case ServiceLabel:
+			v.Infof("  Checking ServiceLabel in %v", m)
 			err := processMap(&m, &(*svc).Labels)
 			if err != nil {
 				return err
@@ -344,7 +348,9 @@ func (lb *loadbalancer) mutateService(svc *corev1.Service) error {
 }
 
 func processMap(m *Mutator, t *map[string]string) error {
+	v := klog.V(3)
 	for key, val := range *t {
+		v.Infof("    Checking '%s:%s'", key, val)
 		keyRe, err := regexp.Compile(m.SearchKey)
 		if err != nil {
 			return err
@@ -355,6 +361,9 @@ func processMap(m *Mutator, t *map[string]string) error {
 		}
 		if keyRe.MatchString(key) && valRe.MatchString(val) {
 			(*t)[key] = valRe.ReplaceAllString(val, m.ReplaceVal)
+			v.Infof("    Replaced value with %q", (*t)[key])
+		} else {
+			v.Infof("    No replacement")
 		}
 	}
 	return nil
